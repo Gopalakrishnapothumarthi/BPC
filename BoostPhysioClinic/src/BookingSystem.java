@@ -1,65 +1,60 @@
 import java.util.*;
 
 public class BookingSystem {
-    private List<Physiotherapist> physiotherapists;
-    private List<Patient> patients;
-    private List<Appointment> appointments;
+    private List<Appointment> appointments = new ArrayList<>();
+    private List<Patient> patients = new ArrayList<>();
 
-    public BookingSystem(){
-        this.physiotherapists=new ArrayList<>();
-        this.patients=new ArrayList<>();
-        this.appointments=new ArrayList<>();
-    }
-
-    public void addPatient(Patient patient){
+    public void addPatient(Patient patient) {
         patients.add(patient);
     }
-    //
-    public void removePatient(Patient patient){
-        patients.remove(patient);
-    }
-    //List<Appointment>
-    public List<Appointment> getAvailableAppointment(){
-        return appointments;
-    }
 
-    //
-    public boolean bookAppointment(Patient patient, Appointment appointment) {
-        // Check if the appointment time is already booked
-        for (Appointment a : appointments) {
-            if (a.getDateTime().equals(appointment.getDateTime()) && a.getPhysiotherapist().equals(appointment.getPhysiotherapist())) {
-                System.out.println("Error: This appointment slot is already booked for"+ a.getPhysiotherapist().getName() +"!" );
-                return false;
-            }
-            if (a.getPatient().equals(patient) && a.getDateTime().equals(appointment.getDateTime())) {
-                System.out.println("Error:"+ patient.getName() +" already has an appointment at this time!");
+    public boolean bookAppointment(Appointment appointment) {
+        for (Appointment existing : appointments) {
+            if (existing.getDateTime().equals(appointment.getDateTime())
+                    && existing.getPhysiotherapist().equals(appointment.getPhysiotherapist())
+                    && !existing.getStatus().equals("Cancelled")) {
+                System.out.println("Error: Appointment slot already booked for " + appointment.getPhysiotherapist().getName());
                 return false;
             }
         }
 
-        // If no conflicts, book the appointment
         appointments.add(appointment);
-        appointment.bookAppointment(patient);
-        patient.bookAppointments(appointment);
-
-        System.out.println("Appointment booked successfully for " + patient.getName() + " at " + appointment.getDateTime());
+        appointment.getPatient().bookAppointment(appointment);
+        System.out.println("Appointment booked successfully for " + appointment.getPatient().getName() + " at " + appointment.getDateTime());
         return true;
     }
 
-    //
-    public boolean cancelAppointment(Patient patient, Appointment appointment) {
-        if (appointments.contains(appointment) && appointment.getPatient().equals(patient)) {
-            appointments.remove(appointment);
-            System.out.println("Appointment cancelled for " + patient.getName());
+    public boolean cancelAppointment(Appointment appointment) {
+        if (appointments.contains(appointment) && appointment.cancel()) {
+            System.out.println("Appointment cancelled for " + appointment.getPatient().getName());
             return true;
         }
-        System.out.println("Error: Appointment not found or patient mismatch!");
+        System.out.println("Error: Appointment could not be cancelled.");
         return false;
     }
-    public void generateReport(){
+
+    public boolean attendAppointment(Appointment appointment) {
+        if (appointment.attend()) {
+            System.out.println("Appointment attended by " + appointment.getPatient().getName());
+            return true;
+        }
+        System.out.println("Error: Appointment " + appointment.getDetails() + " cannot be marked as attended. Current status: " + appointment.getStatus());
+        return false;
+    }
+
+    public void generateReport() {
         System.out.println("Booking Report:");
         for (Appointment appointment : appointments) {
             System.out.println(appointment.getDetails());
+        }
+    }
+
+    public void listAvailableAppointments() {
+        System.out.println("Available Appointments:");
+        for (Appointment a : appointments) {
+            if (a.isAvailable()) {
+                System.out.println(a.getDetails());
+            }
         }
     }
 }
